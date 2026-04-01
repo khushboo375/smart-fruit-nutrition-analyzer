@@ -1,0 +1,14 @@
+path: dataset
+train: images/train
+val: images/val
+
+names:
+    0: apple
+    1: avocado
+    2: banana
+    3: guava
+    4: kiwi
+    5: mango
+    6: orange
+    7: peach
+    8: pineapple

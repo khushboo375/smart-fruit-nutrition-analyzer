@@ -1,0 +1,11 @@
+venv/
+__pycache__/
+runs/
+dataset/
+*.pt
+*.pth
+*.cache
+*.jpg
+*.png
+*.jpeg
+.env
