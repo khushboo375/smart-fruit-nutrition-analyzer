@@ -1,0 +1,83 @@
+/* Background */
+body {
+    background: linear-gradient(135deg, #80fba3, #2db97a);
+}
+
+/* Title */
+.main-title {
+    text-align: center;
+    font-size: 64px;
+    font-weight: 700;
+    color: #044c14;
+}
+
+.subtitle {
+    text-align: center;
+    font-size: 22px;
+    color: #024112;
+    margin-bottom: 30px;
+}
+
+/* Cards */
+.card {
+    background: #ffffff;
+    padding: 18px;
+    border-radius: 16px;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    transition: 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+/* Metric */
+.metric-title {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.metric-value {
+    font-size: 26px;
+    font-weight: bold;
+    color: #111827;
+}
+
+/* Section titles */
+.section-title {
+    font-size: 26px;
+    font-weight: 600;
+    margin-top: 20px;
+}
+
+/* Fruit block */
+.fruit-box {
+    padding: 15px;
+    border-radius: 12px;
+    background: #f3f4f6;
+    margin-bottom: 10px;
+}
+/* Compact upload section */
+.small-input {
+    max-width: 250px;
+    margin: auto;
+}
+
+/* Reduce Streamlit default width */
+.stFileUploader, .stCameraInput {
+    width: 250px !important;
+    margin: auto;
+}
+
+/* Button style look */
+.stFileUploader label, .stCameraInput label {
+    font-size: 14px;
+    text-align: center;
+}
+
+.center-box {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}

@@ -7,67 +7,100 @@ import pandas as pd
 from nutrition_constants import daily_values
 
 # Page config
-st.set_page_config(page_title="NutriScan", layout="wide")
+st.set_page_config(page_title="Fruit Nutrition Analyzer", layout="wide")
 
-# Custom CSS
-st.markdown("""
-<style>
-.main {
-    background: linear-gradient(to right, #dfe9f3, #ffffff);
-}
+# Load CSS
+with open("styles.css") as f:
+    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-.title {
-    text-align: center;
-    font-size: 80px;
-    font-weight: bold;
-}
+if "image_uploaded" not in st.session_state:
+    st.session_state.image_uploaded = False
 
-.card {
-    padding: 20px;
-    border-radius: 15px;
-    background-color: white;
-    box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
-    text-align: center;
-}
-
-.metric {
-    font-size: 22px;
-    font-weight: bold;
-}
-</style>
-""", unsafe_allow_html=True)
+if "image_file" not in st.session_state:
+    st.session_state.image_file = None
 
 # Load model
 model = YOLO("runs/detect/train3/weights/best.pt")
 
-# Title
-st.markdown('<p class="title">🌿 NutriScan</p>', unsafe_allow_html=True)
-st.write("Upload food image to analyze nutrition ")
+# Title Section
+st.markdown('<div class="main-title"> Fruit Nutrition Analyzer</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">Upload or capture image to analyze nutrition</div>', unsafe_allow_html=True)
 
-# Upload + Camera
-col1, col2 = st.columns(2)
+# Upload Section Logic
+st.markdown('<div class="upload-box">', unsafe_allow_html=True)
 
-with col1:
-    uploaded_file = st.file_uploader("Upload Image", type=["jpg", "png", "jpeg"])
+if not st.session_state.image_uploaded:
 
-with col2:
-    camera_image = st.camera_input("Take Photo")
+    # Centered container
+    col1, col2, col3 = st.columns([1,2,1])
 
+    with col2:
+        subcol1, subcol2 = st.columns(2)
+
+        with subcol1:
+            uploaded_file = st.file_uploader(
+            "Upload Image",
+            type=["jpg", "jpeg", "png"],
+            label_visibility="collapsed"
+        )
+
+        with subcol2:
+            camera_image = st.camera_input(
+                "📷 Camera",
+                label_visibility="collapsed"
+            )
+
+        # Handle upload
+        if uploaded_file:
+            st.session_state.image_uploaded = True
+            st.session_state.image_file = uploaded_file
+            st.rerun()
+
+        elif camera_image:
+            st.session_state.image_uploaded = True
+            st.session_state.image_file = camera_image
+            st.rerun()
+
+else:
+    col1, col2, col3 = st.columns([1,2,1])
+
+    with col2:
+        st.markdown(
+            f"""
+            <div style="
+                padding:12px;
+                border-radius:10px;
+                background:#f5f5f5;
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+            ">
+                <span>📄 {st.session_state.image_file.name}</span>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        if st.button("❌ Remove Image"):
+            st.session_state.image_uploaded = False
+            st.session_state.image_file = None
+            st.rerun()
+
+st.markdown('</div>', unsafe_allow_html=True)
+
+# Load image
 image = None
-if uploaded_file:
-    image = Image.open(uploaded_file)
-elif camera_image:
-    image = Image.open(camera_image)
 
+if st.session_state.image_uploaded and st.session_state.image_file:
+    image = Image.open(st.session_state.image_file)
+
+# Process image
 if image:
 
-    #  Resize image (max width 400px)
     image = image.resize((400, int(400 * image.height / image.width)))
+    st.image(image, caption="Uploaded Image", width=300)
 
-    st.image(image, caption="Uploaded Image", width=400)
-
-    img_array = np.array(image)
-    results = model(img_array)
+    results = model(np.array(image))
 
     fruit_counts = {}
 
@@ -77,27 +110,20 @@ if image:
             fruit_name = model.names[cls]
             fruit_counts[fruit_name] = fruit_counts.get(fruit_name, 0) + 1
 
-    if len(fruit_counts) == 0:
+    if not fruit_counts:
         st.warning("No fruits detected.")
     else:
 
-        st.subheader(" Detected Fruits")
-
-        total_calories = 0
-        total_carbs = 0
-        total_fat = 0
-        total_fiber = 0
+        total_calories = total_carbs = total_fat = total_fiber = 0
         total_vitamins = {"A": 0, "B": 0, "C": 0, "K": 0}
         total_minerals = {"potassium": 0}
 
         for fruit, count in fruit_counts.items():
             if fruit in fruit_data:
                 data = fruit_data[fruit]
-
-                total_calories += data["calories"] * count
-
                 nutrients = data["nutrients"]
 
+                total_calories += data["calories"] * count
                 total_carbs += nutrients.get("carbs", 0) * count
                 total_fat += nutrients.get("fat", 0) * count
                 total_fiber += nutrients.get("fiber", 0) * count
@@ -108,72 +134,71 @@ if image:
                 for m, val in nutrients.get("minerals", {}).items():
                     total_minerals[m] += val * count
 
-        # Cards
-        col1, col2, col3, col4 = st.columns(4)
+        #  Modern Cards
+        st.markdown('<div class="section-title">Nutrition Overview</div>', unsafe_allow_html=True)
 
-        with col1:
-            st.markdown(f'<div class="card"><p>Calories</p><p class="metric">{total_calories} kcal</p></div>', unsafe_allow_html=True)
+        c1, c2, c3, c4 = st.columns(4)
 
-        with col2:
-            st.markdown(f'<div class="card"><p>Carbs</p><p class="metric">{total_carbs:.2f} g</p></div>', unsafe_allow_html=True)
+        def card(title, value):
+            return f"""
+            <div class="card">
+                <div class="metric-title">{title}</div>
+                <div class="metric-value">{value}</div>
+            </div>
+            """
 
-        with col3:
-            st.markdown(f'<div class="card"><p>Fat</p><p class="metric">{total_fat:.2f} g</p></div>', unsafe_allow_html=True)
-
-        with col4:
-            st.markdown(f'<div class="card"><p>Fiber</p><p class="metric">{total_fiber:.2f} g</p></div>', unsafe_allow_html=True)
+        c1.markdown(card(" Calories", f"{total_calories} kcal"), unsafe_allow_html=True)
+        c2.markdown(card(" Carbs", f"{total_carbs:.1f} g"), unsafe_allow_html=True)
+        c3.markdown(card(" Fat", f"{total_fat:.1f} g"), unsafe_allow_html=True)
+        c4.markdown(card(" Fiber", f"{total_fiber:.1f} g"), unsafe_allow_html=True)
 
         # Chart
-        st.subheader(" Nutrition Breakdown")
+        st.markdown('<div class="section-title">Nutrition Breakdown</div>', unsafe_allow_html=True)
 
         df = pd.DataFrame({
-            "Nutrient": ["Calories", "Carbs", "Fat"],
-            "Value": [total_calories, total_carbs, total_fat]
+            "Nutrient": ["Calories", "Carbs", "Fat", "Fiber"],
+            "Value": [total_calories, total_carbs, total_fat, total_fiber]
         })
 
         st.bar_chart(df.set_index("Nutrient"))
 
-        #Daily % Section
-        st.subheader(" Daily Nutrition Coverage (%)")
+        # Daily %
+        st.markdown('<div class="section-title">Daily Intake Coverage</div>', unsafe_allow_html=True)
 
-        calorie_pct = (total_calories / daily_values["calories"]) * 100
-        carb_pct = (total_carbs / daily_values["carbs"]) * 100
-        fat_pct = (total_fat / daily_values["fat"]) * 100
-        fiber_pct = (total_fiber / daily_values["fiber"]) * 100
+        st.progress(min(int((total_calories / daily_values["calories"]) * 100), 100))
+        st.write(f"Calories: {(total_calories / daily_values['calories']) * 100:.1f}%")
 
-        vitamin_c_pct = (total_vitamins["C"] / daily_values["vitamin_c"]) * 100 if total_vitamins["C"] else 0
-        vitamin_a_pct = (total_vitamins["A"] / daily_values["vitamin_a"]) * 100 if total_vitamins["A"] else 0
-        potassium_pct = (total_minerals["potassium"] / daily_values["potassium"]) * 100 if total_minerals["potassium"] else 0
+        # Fruits
+        st.markdown('<div class="section-title">Detected Fruits</div>', unsafe_allow_html=True)
 
-        st.write(f"Calories: {calorie_pct:.1f}%")
-        st.write(f"Carbs: {carb_pct:.1f}%")
-        st.write(f"Fat: {fat_pct:.1f}%")
-        st.write(f"Fiber: {fiber_pct:.1f}%")
-        st.write(f"Vitamin C: {vitamin_c_pct:.1f}%")
-        st.write(f"Vitamin A: {vitamin_a_pct:.1f}%")
-        st.write(f"Potassium: {potassium_pct:.1f}%")
+        for fruit, count in fruit_counts.items():
+            st.markdown(f"""
+            <div class="fruit-box">
+                <b>{fruit.capitalize()}</b>
+            </div>
+            """, unsafe_allow_html=True)
 
-        # Details
-        st.subheader(" Detailed Nutrition")
+        # Detailed Nutrition
+        st.markdown('<div class="section-title">Detailed Nutrition</div>', unsafe_allow_html=True)
 
         for fruit, count in fruit_counts.items():
             if fruit in fruit_data:
                 data = fruit_data[fruit]
                 nutrients = data["nutrients"]
 
-                st.markdown(f"### {fruit.capitalize()}")
+                st.markdown(f"###  {fruit.capitalize()}")
 
                 st.write(f"Calories: {data['calories'] * count} kcal")
                 st.write(f"Carbs: {nutrients.get('carbs', 0) * count} g")
                 st.write(f"Fiber: {nutrients.get('fiber', 0) * count} g")
                 st.write(f"Fat: {nutrients.get('fat', 0) * count} g")
 
-                # Vitamins
-                st.write("Vitamins:")
-                for v, val in nutrients.get("vitamins", {}).items():
-                    st.write(f"- Vitamin {v}: {val * count}")
+                if "vitamins" in nutrients:
+                    st.write("Vitamins:")
+                    for v, val in nutrients["vitamins"].items():
+                        st.write(f"- Vitamin {v}: {val * count}")
 
-                # Minerals
-                st.write("Minerals:")
-                for m, val in nutrients.get("minerals", {}).items():
-                    st.write(f"- {m}: {val * count} mg")
+                if "minerals" in nutrients:
+                    st.write("Minerals:")
+                    for m, val in nutrients["minerals"].items():
+                        st.write(f"- {m}: {val * count} mg")
