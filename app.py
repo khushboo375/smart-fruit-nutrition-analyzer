@@ -24,7 +24,80 @@ model = YOLO("runs/detect/train3/weights/best.pt")
 
 # Title Section
 st.markdown('<div class="main-title"> Fruit Nutrition Analyzer</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">Upload or capture image to analyze nutrition</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">Upload or capture image to analyze nutrition of your Diet</div>', unsafe_allow_html=True)
+
+
+st.markdown('<div class="section-title">Choose Recommendation Mode</div>', unsafe_allow_html=True)
+
+mode = st.radio(
+    "Select Mode",  
+    ["Generalized Recommendation", "Personalized Recommendation"],
+    horizontal=True,
+    label_visibility="collapsed"  
+)
+
+daily_calories = 2000  # default
+
+if mode == "Generalized Recommendation":
+    st.info("Using Standard Daily Intake (2000 kcal)")
+
+else:
+    st.markdown("### Enter Your Details")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        age = st.number_input("Age", min_value=1, max_value=100, step=1)
+        gender = st.selectbox("Gender", ["Male", "Female"])
+        weight = st.number_input("Weight (kg)", min_value=1.0)
+
+    with col2:
+        height = st.number_input("Height (cm)", min_value=50.0)
+        activity = st.selectbox("Activity Level", ["Sedentary", "Moderate", "Active"])
+
+    def calculate_bmi(weight, height):
+        height_m = height / 100  
+        bmi = weight / (height_m ** 2)
+        return bmi
+
+    def calculate_calories(age, gender, weight, height, activity):
+        if gender == "Male":
+            bmr = 10*weight + 6.25*height - 5*age + 5
+        else:
+            bmr = 10*weight + 6.25*height - 5*age - 161
+
+        activity_map = {
+            "Sedentary": 1.2,
+            "Moderate": 1.55,
+            "Active": 1.725
+        }
+
+        return bmr * activity_map[activity]
+
+    # Validate inputs
+    if age > 0 and weight > 0 and height > 0:
+        daily_calories = calculate_calories(age, gender, weight, height, activity)
+        bmi = calculate_bmi(weight, height)
+
+        # BMI Category
+        if bmi < 18.5:
+            bmi_status = "Underweight"
+        elif 18.5 <= bmi < 24.9:
+            bmi_status = "Normal"
+        elif 25 <= bmi < 29.9:
+            bmi_status = "Overweight"
+        else:
+            bmi_status = "Obese"
+
+        st.success(f"Personalized Daily Intake: {int(daily_calories)} kcal")
+
+        st.markdown(f"""
+        <div class="card" style="margin-top:10px;">
+            <div class="metric-title">BMI</div>
+            <div class="metric-value">{bmi:.1f}</div>
+            <div style="font-size:14px; color:#6b7280;">{bmi_status}</div>
+        </div>
+        """, unsafe_allow_html=True)
 
 # Upload Section Logic
 st.markdown('<div class="upload-box">', unsafe_allow_html=True)
@@ -165,8 +238,8 @@ if image:
         # Daily %
         st.markdown('<div class="section-title">Daily Intake Coverage</div>', unsafe_allow_html=True)
 
-        st.progress(min(int((total_calories / daily_values["calories"]) * 100), 100))
-        st.write(f"Calories: {(total_calories / daily_values['calories']) * 100:.1f}%")
+        st.progress(min(int((total_calories / daily_calories) * 100), 100))
+        st.write(f"Calories: {(total_calories / daily_calories) * 100:.1f}%")
 
         # Fruits
         st.markdown('<div class="section-title">Detected Fruits</div>', unsafe_allow_html=True)
