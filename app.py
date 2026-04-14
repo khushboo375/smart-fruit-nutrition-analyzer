@@ -5,9 +5,19 @@ import numpy as np
 from fruit_calories import fruit_data
 import pandas as pd
 from nutrition_constants import daily_values
+from utils import generate_ai_recommendation
 
 # Page config
 st.set_page_config(page_title="Fruit Nutrition Analyzer", layout="wide")
+
+# Hide Streamlit default navbar / header / footer
+st.markdown("""
+    <style>
+        #MainMenu {visibility: hidden;}
+        header {visibility: hidden;}
+        footer {visibility: hidden;}
+    </style>
+""", unsafe_allow_html=True)
 
 # Load CSS
 with open("styles.css") as f:
@@ -20,7 +30,7 @@ if "image_file" not in st.session_state:
     st.session_state.image_file = None
 
 # Load model
-model = YOLO("runs/detect/train3/weights/best.pt")
+model = YOLO("runs/detect/train2/weights/best.pt")
 
 # Title Section
 st.markdown('<div class="main-title"> Fruit Nutrition Analyzer</div>', unsafe_allow_html=True)
@@ -206,6 +216,34 @@ if image:
 
                 for m, val in nutrients.get("minerals", {}).items():
                     total_minerals[m] += val * count
+                    
+        # ================= AI RECOMMENDATION =================
+        st.markdown('<div class="section-title">🤖 AI Nutrition Advisor</div>', unsafe_allow_html=True)
+
+        with st.spinner("🧠 Analyzing your diet..."):
+            recommendation = generate_ai_recommendation(
+                fruit_counts,
+                total_calories,
+                total_carbs,
+                total_fiber,
+                total_fat,
+                daily_calories
+            )
+
+        # Clean styled card
+        st.markdown(f"""
+        <div style="
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid #cbd5e1;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+            font-family: 'Segoe UI', sans-serif;
+            line-height: 1.6;
+        ">
+        {recommendation}
+        </div>
+        """, unsafe_allow_html=True)
 
         #  Modern Cards
         st.markdown('<div class="section-title">Nutrition Overview</div>', unsafe_allow_html=True)
