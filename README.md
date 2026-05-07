@@ -65,16 +65,6 @@ fruit-nutrition-analyzer/
 
 ---
 
-## Installation & Setup
-
-### 1. Clone the repository
-```bash
-git clone https://github.com/your-username/fruit-nutrition-analyzer.git
-cd fruit-nutrition-analyzer
-
-```markdown
----
-
 ## Future Scope
 
 - Add more food categories  
@@ -84,7 +74,13 @@ cd fruit-nutrition-analyzer
 
 ---
 
-## Author
+## Installation & Setup
 
-Khushboo Yadav
+### 1. Clone the repository
+```bash
+git clone https://github.com/your-username/fruit-nutrition-analyzer.git
+cd fruit-nutrition-analyzer
 
+pip install -r requirements.txt
+
+streamlit run app.py
