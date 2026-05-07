@@ -72,7 +72,7 @@ fruit-nutrition-analyzer/
 git clone https://github.com/your-username/fruit-nutrition-analyzer.git
 cd fruit-nutrition-analyzer
 
-
+```markdown
 ---
 
 ## Future Scope
