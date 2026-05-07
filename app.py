@@ -30,13 +30,11 @@ if "image_file" not in st.session_state:
     st.session_state.image_file = None
 
 # Load model
-model = YOLO("runs/detect/train2/weights/best.pt")
+model = YOLO("runs/detect/train3/weights/best.pt")
 
 # Title Section
 st.markdown('<div class="main-title"> Fruit Nutrition Analyzer</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">Upload or capture image to analyze nutrition of your Diet</div>', unsafe_allow_html=True)
-
-
 st.markdown('<div class="section-title">Choose Recommendation Mode</div>', unsafe_allow_html=True)
 
 mode = st.radio(
